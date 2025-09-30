@@ -5,6 +5,7 @@ import Logo from '../../images/common/logo.svg';
 import { Link, NavLink } from 'react-router-dom';
 import navigation from '../../api/navigation.jsx';
 import {logout} from '../../store/slices/authenticationSlice.jsx';
+import api from '../../lib/apiClient.js';
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -19,8 +20,14 @@ const Sidebar = () => {
     setSidebar(!sidebar);
   };
 
-  const handleIsLogout = () => {
-    dispatch(logout())
+  const handleIsLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      // ignore
+    } finally {
+      dispatch(logout());
+    }
   };
 
   return (

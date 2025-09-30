@@ -7,6 +7,7 @@ import Input from '../../components/common/Input.jsx';
 import Button from '../../components/common/Button.jsx';
 import CheckBox from '../../components/common/CheckBox.jsx';
 import {login} from '../../store/slices/authenticationSlice.jsx';
+import api from '../../lib/apiClient.js';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -34,15 +35,22 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (formData.email === "eventadmin@gmail.com" && formData.password === "eventadmin") {
-      dispatch(login())
-    } else {
+    try {
+      const { data } = await api.post('/auth/login', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      const { user, accessToken, refreshToken } = data || {};
+      if (!accessToken) {
+        throw new Error('No access token returned');
+      }
+      dispatch(login({ user, accessToken, refreshToken }));
+    } catch (err) {
       setLoginError(true);
-      setTimeout(() => {
-        setLoginError(false);
-      }, 5000);
+      setTimeout(() => setLoginError(false), 5000);
     }
   };
 
@@ -56,7 +64,8 @@ const Login = () => {
       <div className="login_form">
         <div className="login_content">
           <div to="/" className="logo">
-            <img src={Logo} alt="logo" />
+            <img src='' alt="logo" />
+            Phoenix
           </div>
           <h2 className="page_heading">Login</h2>
         </div>
@@ -102,7 +111,7 @@ const Login = () => {
             />
           </div>
         </form>
-        <p className="signup_link">
+        {/* <p className="signup_link">
           Don't have an account yet? <Link to="/signup">Join Metronic</Link>
         </p>
         <button className="google_signin">
@@ -110,7 +119,7 @@ const Login = () => {
             <img src="https://img.icons8.com/color/1000/google-logo.png" alt="" />
           </figure>
           <h2>Sign in with Google</h2>
-        </button>
+        </button> */}
       </div>
     </div>
   );

@@ -12,13 +12,13 @@ const Layout = () => {
   const isAuthenticated = useSelector(state => state.authentication.isAuthenticated);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     navigate("/login");
-  //   }else{
-  //     navigate("/catalog/product/manage");
-  //   }
-  // }, [isAuthenticated]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }else{
+      navigate("/catalog/product/manage");
+    }
+  }, [isAuthenticated]);
 
   return (
     <>
