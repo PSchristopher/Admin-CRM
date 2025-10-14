@@ -1,8 +1,2 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authenticationSlice from './slices/authenticationSlice.jsx'
-
-export const store = configureStore({
-  reducer: {
-     authentication: authenticationSlice,
-  },
-})
+// Deprecated: Redux store is no longer used; kept for compatibility if imported elsewhere.
+export const store = undefined;

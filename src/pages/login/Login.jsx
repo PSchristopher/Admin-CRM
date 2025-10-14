@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'react-icons/tb';
-import { useDispatch } from 'react-redux';
 import Logo from "../../images/common/logo-dark.svg";
 import Input from '../../components/common/Input.jsx';
 import Button from '../../components/common/Button.jsx';
 import CheckBox from '../../components/common/CheckBox.jsx';
-import {login} from '../../store/slices/authenticationSlice.jsx';
 import api from '../../lib/apiClient.js';
+import { useAuth } from '../../providers/AuthProvider.jsx';
 
 const Login = () => {
-  const dispatch = useDispatch();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -47,7 +46,7 @@ const Login = () => {
       if (!accessToken) {
         throw new Error('No access token returned');
       }
-      dispatch(login({ user, accessToken, refreshToken }));
+      login({ user, accessToken, refreshToken });
     } catch (err) {
       setLoginError(true);
       setTimeout(() => setLoginError(false), 5000);
@@ -55,12 +54,8 @@ const Login = () => {
   };
 
   return (
-    <div className="login">
-      <div className="login_sidebar">
-        <figure className="login_image">
-          <img src="https://images.unsplash.com/photo-1694537745985-34eacdf76139?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80" alt="" />
-        </figure>
-      </div>
+    <div className="login flex justify-center items-center">
+     
       <div className="login_form">
         <div className="login_content">
           <div to="/" className="logo">

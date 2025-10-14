@@ -1,5 +1,6 @@
 import React from 'react'
 import Layout from './components/layout/Layout.jsx'
+import './styles/tailwind.css'
 import './styles/style.min.css'
 const App = () => {
   return (
