@@ -23,7 +23,7 @@ const Layout = () => {
         navigate("/login", { replace: true });
       } else if (isAuthenticated && (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/signup')) {
         console.log('Redirecting to dashboard');
-        navigate("/catalog/product/manage", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     }
   }, [isAuthenticated, isLoadingUser, navigate, location.pathname]);

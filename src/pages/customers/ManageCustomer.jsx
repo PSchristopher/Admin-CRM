@@ -1,7 +1,7 @@
 import * as Icons from "react-icons/tb";
-import Customers from "../../api/Customers.json";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Input from "../../components/common/Input.jsx";
 import Badge from "../../components/common/Badge.jsx";
 import Button from "../../components/common/Button.jsx";
@@ -10,6 +10,7 @@ import Dropdown from "../../components/common/Dropdown.jsx";
 import Pagination from "../../components/common/Pagination.jsx";
 import TableAction from "../../components/common/TableAction.jsx";
 import SelectOption from "../../components/common/SelectOption.jsx";
+import api from "../../lib/apiClient.js";
 
 const ManageCustomer = () => {
   const [bulkCheck, setBulkCheck] = useState(false);
@@ -17,13 +18,31 @@ const ManageCustomer = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedValue, setSelectedValue] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
   const [tableRow, setTableRow] = useState([
     { value: 2, label: "2" },
     { value: 5, label: "5" },
     { value: 10, label: "10" },
   ]);
 
-  const customer = Customers;
+  // Fetch customers from backend
+  const { data: customersData, isLoading, error, refetch } = useQuery({
+    queryKey: ['customers', currentPage, selectedValue, searchTerm],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: selectedValue.toString(),
+        ...(searchTerm && { search: searchTerm })
+      });
+      
+      const { data } = await api.get(`/user`);
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const customers = customersData?.data || [];
+  const totalPages = customersData?.totalPages || 1;
 
   const bulkAction = [
     { value: "delete", label: "Delete" },
@@ -43,7 +62,7 @@ const ManageCustomer = () => {
     setBulkCheck(isCheck);
     if (isCheck) {
       const updateChecks = {};
-      customer.forEach((customer) => {
+      customers.forEach((customer) => {
         updateChecks[customer.id] = true;
       });
       setSpecificChecks(updateChecks);
@@ -60,16 +79,31 @@ const ManageCustomer = () => {
   };
 
   const showTableRow = (selectedOption) => {
-    setSelectedValue(selectedOption.label);
+    setSelectedValue(selectedOption.value);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
 
   const actionItems = ["Delete", "edit"];
 
-  const handleActionItemClick = (item, itemID) => {
-    var updateItem = item.toLowerCase();
+  const handleActionItemClick = async (item, itemID) => {
+    const updateItem = item.toLowerCase();
     if (updateItem === "delete") {
-      alert(`#${itemID} item delete`);
+      if (window.confirm(`Are you sure you want to delete customer #${itemID}?`)) {
+        try {
+          await api.delete(`/customers/${itemID}`);
+          refetch(); // Refresh the data
+          alert(`Customer #${itemID} deleted successfully`);
+        } catch (error) {
+          console.error('Delete failed:', error);
+          alert('Failed to delete customer');
+        }
+      }
     } else if (updateItem === "edit") {
       navigate(`/customers/manage/${itemID}`);
     }
@@ -91,6 +125,8 @@ const ManageCustomer = () => {
               <Input
                 placeholder="Search Customer..."
                 className="sm table_search"
+                value={searchTerm}
+                onChange={handleSearch}
               />
               <div className="btn_parent">
                 <Link to="/customers/add" className="sm button">
@@ -102,28 +138,33 @@ const ManageCustomer = () => {
               </div>
             </div>
             <div className="content_body">
-              <div className="table_responsive">
-                <table className="separate">
-                  <thead>
-                    <tr>
-                      <th className="td_checkbox">
-                        <CheckBox
-                          onChange={handleBulkCheckbox}
-                          isChecked={bulkCheck}
-                        />
-                      </th>
-                      <th className="td_id">id</th>
-                      <th className="td_image">image</th>
-                      <th colSpan="4">name</th>
-                      <th>email</th>
-                      <th>orders</th>
-                      <th className="td_status">status</th>
-                      <th className="td_date">created at</th>
-                      <th>actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customer.map((customer, key) => {
+              {isLoading ? (
+                <div className="loading">Loading customers...</div>
+              ) : error ? (
+                <div className="error">Error loading customers: {error.message}</div>
+              ) : (
+                <div className="table_responsive">
+                  <table className="separate">
+                    <thead>
+                      <tr>
+                        <th className="td_checkbox">
+                          <CheckBox
+                            onChange={handleBulkCheckbox}
+                            isChecked={bulkCheck}
+                          />
+                        </th>
+                        <th className="td_id">id</th>
+                        <th className="td_image">image</th>
+                        <th colSpan="4">name</th>
+                        <th>email</th>
+                        <th>orders</th>
+                        <th className="td_status">status</th>
+                        <th className="td_date">created at</th>
+                        <th>actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customers.map((customer, key) => {
                       return (
                         <tr key={key}>
                           <td className="td_checkbox">
@@ -137,15 +178,15 @@ const ManageCustomer = () => {
                           <td className="td_id">{customer.id}</td>
                           <td className="td_image">
                             <img
-                              src={`${customer.image}${customer.name}`}
+                              src={customer.image || customer.avatar || '/default-avatar.png'}
                               alt={customer.name}
                             />
                           </td>
                           <td colSpan="4">
                             <Link to={customer.id.toString()}>{customer.name}</Link>
                           </td>
-                          <td>{customer.contact.email}</td>
-                          <td>{customer.purchase_history.length}</td>
+                          <td>{customer.email}</td>
+                          <td>{customer.ordersCount || 0}</td>
                           <td className="td_status">
                             {customer.status.toLowerCase() === "active" ||
                              customer.status.toLowerCase() === "completed" ||
@@ -180,7 +221,7 @@ const ManageCustomer = () => {
                                ""
                              )}
                           </td>
-                          <td className="td_date">{customer.createdAt}</td>
+                          <td className="td_date">{new Date(customer.createdAt).toLocaleDateString()}</td>
                           
                           <td className="td_action">
                             <TableAction
@@ -192,10 +233,11 @@ const ManageCustomer = () => {
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             <div className="content_footer">
               <Dropdown
@@ -207,7 +249,7 @@ const ManageCustomer = () => {
               />
               <Pagination
                 currentPage={currentPage}
-                totalPages={5}
+                totalPages={totalPages}
                 onPageChange={onPageChange}
               />
             </div>

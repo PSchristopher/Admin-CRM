@@ -47,11 +47,13 @@ const navigate = useNavigate();
       if (!accessToken) {
         throw new Error('No access token returned');
       }
-      console.log(data, 'datadata')
+      login({ user: admin, accessToken, refreshToken });
+
+      console.log(data.admin, 'datadata')
        if (data.admin) {
-      navigate({ to: '/' });
-          }
-      login({ admin, accessToken, refreshToken });
+        console.log('admin admin')
+        navigate('/');
+       }
      
     } catch (err) {
       console.error('Login failed:', err);
