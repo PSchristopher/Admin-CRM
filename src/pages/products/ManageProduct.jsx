@@ -1,5 +1,4 @@
 import * as Icons from "react-icons/tb";
-import Products from "../../api/Products.json";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/common/Input.jsx";
@@ -12,6 +11,8 @@ import Pagination from "../../components/common/Pagination.jsx";
 import TableAction from "../../components/common/TableAction.jsx";
 import RangeSlider from "../../components/common/RangeSlider.jsx";
 import MultiSelect from "../../components/common/MultiSelect.jsx";
+import api from "../../lib/apiClient.js";
+import { useQuery } from "@tanstack/react-query";
 
 const ManageProduct = () => {
   const [fields, setFields] = useState({
@@ -37,7 +38,14 @@ const ManageProduct = () => {
       [key]: value,
     });
   };
-  const products = Products;
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const res = await api.get("/admin/products");
+      return res.data;
+    },
+  });
 
   const bulkAction = [
     { value: "delete", label: "Delete" },

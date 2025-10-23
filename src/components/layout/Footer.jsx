@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container">
       <div className="footer">
       	
-      	<p>&copy; {new Date().getFullYear()} Your Website. All rights reserved.</p>
+      	<p>&copy;</p>
         <ul>
           <li>
             <Link to="/">Home</Link>

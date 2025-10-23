@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as Icons from 'react-icons/tb';
 import Logo from "../../images/common/logo-dark.svg";
 import Input from '../../components/common/Input.jsx';
@@ -10,12 +10,13 @@ import { useAuth } from '../../providers/AuthProvider.jsx';
 
 const Login = () => {
   const { login } = useAuth();
+const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [isRemember, setIsRemember] = useState(false);
+  // const [isRemember, setIsRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(false);
 
@@ -26,9 +27,9 @@ const Login = () => {
     }));
   };
 
-  const handleRememberChange = (check) => {
-    setIsRemember(check);
-  };
+  // const handleRememberChange = (check) => {
+  //   setIsRemember(check);
+  // };
 
   const handleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -37,17 +38,23 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post('/auth/login', {
+      const { data } = await api.post('/admin/login', {
         email: formData.email,
         password: formData.password,
       });
 
-      const { user, accessToken, refreshToken } = data || {};
+      const { admin, accessToken, refreshToken } = data || {};
       if (!accessToken) {
         throw new Error('No access token returned');
       }
-      login({ user, accessToken, refreshToken });
+      console.log(data, 'datadata')
+       if (data.admin) {
+      navigate({ to: '/' });
+          }
+      login({ admin, accessToken, refreshToken });
+     
     } catch (err) {
+      console.error('Login failed:', err);
       setLoginError(true);
       setTimeout(() => setLoginError(false), 5000);
     }
@@ -90,15 +97,15 @@ const Login = () => {
               icon={<Icons.TbEye/>}
             />
           </div>
-          <div className="form_control">
+          {/* <div className="form_control">
             <CheckBox
               id="rememberCheckbox"
               label="Remember me"
               checked={isRemember}
               onChange={handleRememberChange}
             />
-          </div>
-          {loginError && <small className="incorrect">Incorrect email or password and Remember me</small>}
+          </div> */}
+          {loginError && <small className="incorrect">Incorrect email or password </small>}
           <div className="form_control">
             <Button
               label="Login"

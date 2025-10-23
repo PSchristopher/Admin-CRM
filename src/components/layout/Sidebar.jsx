@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import * as Icons from 'react-icons/tb';
-import { useDispatch } from 'react-redux';
 import Logo from '../../images/common/logo.svg';
 import { Link, NavLink } from 'react-router-dom';
 import navigation from '../../api/navigation.jsx';
@@ -8,7 +7,6 @@ import {logout} from '../../store/slices/authenticationSlice.jsx';
 import api from '../../lib/apiClient.js';
 
 const Sidebar = () => {
-  const dispatch = useDispatch();
   const [toggle, setToggle] = useState(null);
   const [sidebar, setSidebar] = useState(false);
 
@@ -26,7 +24,7 @@ const Sidebar = () => {
     } catch (e) {
       // ignore
     } finally {
-      dispatch(logout());
+      logout();
     }
   };
 

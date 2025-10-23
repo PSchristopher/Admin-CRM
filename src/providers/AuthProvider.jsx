@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/apiClient.js';
 
@@ -13,54 +13,68 @@ const readStoredUser = () => {
   }
 };
 
-const hasAccessToken = () => typeof window !== 'undefined' && Boolean(localStorage.getItem('accessToken'));
+const hasAccessToken = () =>
+  typeof window !== 'undefined' && Boolean(localStorage.getItem('accessToken'));
 
 const AuthProvider = ({ children }) => {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState(readStoredUser());
+  const hasToken = hasAccessToken();
+  const initialUser = readStoredUser();
 
-  const { isFetching } = useQuery({
+  // Always validate if we have token, but use cached data immediately
+  const { 
+    data: user = initialUser,
+    isLoading,
+    isFetching 
+  } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      const { data } = await api.get('/auth/me');
+      const { data } = await api.get('/admin/me');
       return data;
     },
-    enabled: hasAccessToken() && !user,
+    enabled: hasToken, // Always validate if token exists
     retry: 1,
-    onSuccess: (data) => {
-      setUser(data || null);
-      if (data) {
-        localStorage.setItem('user', JSON.stringify(data));
-      }
-    },
-    onError: () => {
-      // Keep tokens; user may still be null until next successful fetch
-    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const login = useCallback(({ user: nextUser, accessToken, refreshToken }) => {
     if (accessToken) localStorage.setItem('accessToken', accessToken);
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-    if (nextUser) localStorage.setItem('user', JSON.stringify(nextUser));
-    setUser(nextUser || null);
-    queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    if (nextUser) {
+      queryClient.setQueryData(['auth', 'me'], nextUser);
+      localStorage.setItem('user', JSON.stringify(nextUser));
+    }
   }, [queryClient]);
 
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    setUser(null);
-    queryClient.clear();
+    queryClient.setQueryData(['auth', 'me'], null);
   }, [queryClient]);
+
+  const isAuthenticated = Boolean(user) && hasToken;
+  
+  // Only show loading if we have NO user data and query is running
+  const isLoadingUser = !user && (isLoading || isFetching);
+
+  console.log('Auth State:', {
+    hasToken,
+    user: !!user,
+    initialUser: !!initialUser,
+    isLoading,
+    isFetching,
+    isAuthenticated,
+    isLoadingUser
+  });
 
   const value = useMemo(() => ({
     user,
-    isAuthenticated: Boolean(user) || hasAccessToken(),
-    isLoadingUser: isFetching,
+    isAuthenticated,
+    isLoadingUser,
     login,
     logout,
-  }), [user, isFetching, login, logout]);
+  }), [user, isAuthenticated, isLoadingUser, login, logout]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -69,8 +83,10 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  return context;
+};
 
 export default AuthProvider;
-
-
