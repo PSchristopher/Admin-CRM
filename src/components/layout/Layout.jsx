@@ -7,6 +7,7 @@ import Signup from "../../pages/login/Signup.jsx";
 import React, { useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../providers/AuthProvider.jsx";
+import Loader from "../common/Loader.jsx";
 
 const Layout = () => {
   const { isAuthenticated, isLoadingUser } = useAuth();
@@ -29,7 +30,7 @@ const Layout = () => {
   }, [isAuthenticated, isLoadingUser, navigate, location.pathname]);
 
   if (isLoadingUser) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return (

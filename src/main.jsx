@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthProvider from './providers/AuthProvider.jsx';
+import ToastProvider from './components/common/Toast.jsx';
 
 const root = ReactDOM.createRoot(document.getElementById('__admin_panel'));
 const queryClient = new QueryClient({
@@ -18,7 +19,9 @@ root.render(
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ToastProvider>
         <App />
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   </BrowserRouter>

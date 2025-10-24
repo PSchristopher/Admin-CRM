@@ -36,7 +36,7 @@ const Sidebar = () => {
           <img src={Logo} alt="logo" />
         </Link>*/}
 
-        <h2 className="logo_text">Your Logo</h2>
+        <h2 className="logo_text"> Logo</h2>
         <Link className="navbar_icon menu_sidebar" onClick={handleSidebar}>
           <Icons.TbChevronsLeft className={`${sidebar ? 'active' : ''}`} />
         </Link>

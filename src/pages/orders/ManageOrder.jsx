@@ -10,6 +10,7 @@ import Pagination from "../../components/common/Pagination.jsx";
 import TableAction from "../../components/common/TableAction.jsx";
 import SelectOption from "../../components/common/SelectOption.jsx";
 import api from "../../lib/apiClient.js";
+import Loader from "../../components/common/Loader.jsx";
 
 const ManageOrders = () => {
   const [bulkCheck, setBulkCheck] = useState(false);
@@ -167,15 +168,8 @@ const ManageOrders = () => {
 
   if (loading) {
     return (
-      <section className="orders">
-        <div className="container">
-          <div className="wrapper">
-            <div className="content transparent">
-              <div className="loading">Loading orders...</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      // 
+      <Loader/>
     );
   }
 
@@ -262,7 +256,7 @@ const ManageOrders = () => {
                               isChecked={specificChecks[order.id] || false}
                             />
                           </td>
-                          <td className="td_id">{order.id}</td>
+                          <td className="td_id">{order.shopify_order_name}</td>
                           <td>
                             {order.customer ? (
                               <Link to={`/customers/manage/${order.customer.id}`}>

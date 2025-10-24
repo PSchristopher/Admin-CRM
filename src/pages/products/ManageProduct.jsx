@@ -13,6 +13,7 @@ import RangeSlider from "../../components/common/RangeSlider.jsx";
 import MultiSelect from "../../components/common/MultiSelect.jsx";
 import api from "../../lib/apiClient.js";
 import { useQuery } from "@tanstack/react-query";
+import Loader from "../../components/common/Loader.jsx";
 
 const ManageProduct = () => {
   const [fields, setFields] = useState({
@@ -311,8 +312,7 @@ onClick={()=>refetch()}
             </div>
             <div className="content_body">
               {isLoading ? (
-                <div className="loading">Loading products...</div>
-              ) : (
+<Loader/>              ) : (
                 <div className="table_responsive">
                   <table className="separate">
                     <thead>

@@ -25,11 +25,13 @@ import MultiSelect from "../../components/common/MultiSelect.jsx";
 import ManageProduct from "../../pages/products/ManageProduct.jsx";
 import api from "../../lib/apiClient.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Loader from "../../components/common/Loader.jsx";
 
 const EditProduct = ({ productData }) => {
   const { productId } = useParams();
   const queryClient = useQueryClient();
     const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [product, setProduct] = useState();
 
   console.log('route productId =', productId);
 
@@ -40,12 +42,14 @@ const EditProduct = ({ productData }) => {
       console.log('fetching product from API for id', productId);
       const res = await api.get(`/admin/products/${productId}`);
       console.log('api response', res);
+      setProduct(mapProductToForm(res.data));
       return res.data ?? res;
     },
     enabled: Boolean(productId),
     retry: 1,
     staleTime: 5 * 60 * 1000,
-    onSuccess: (d) => console.log('useQuery onSuccess product', d),
+    onSuccess: (d) => {console.log('useQuery onSuccess product', d)
+    },
     onError: (e) => console.error('useQuery onError product', e),
   });
 
@@ -85,9 +89,7 @@ const EditProduct = ({ productData }) => {
     }
   });
 
-  const getProduct = apiProduct;
-
-  if (!getProduct && !isLoading) {
+  if (!apiProduct && !isLoading) {
     return <Routes>
       <Route path="*" element={<NotFound title="product not found" message="Sorry, the product details you are looking for could not be found."/>}/>
     </Routes>
@@ -124,7 +126,7 @@ const EditProduct = ({ productData }) => {
       meta_link: `http://localhost:5173/catalog/product/${product.id}`,
       
       // Status & Tags
-      status: product.status || 'draft',
+      status: product.status ,
       tags: product.tags || [],
       
       // Additional fields
@@ -135,14 +137,14 @@ const EditProduct = ({ productData }) => {
     };
   };
 
-  const [product, setProduct] = useState(mapProductToForm(getProduct));
-
+console.log('product state =', product);
   // Update product when API data loads
-  useEffect(() => {
-    if (apiProduct) {
-      setProduct(mapProductToForm(apiProduct));
-    }
-  }, [apiProduct]);
+  // useEffect(() => {
+  //   console.log('mapping apiProduct to form', apiProduct);
+  //   if (apiProduct) {
+  //     setProduct(apiProduct);
+  //   }
+  // }, [apiProduct]);
 
   // Calculate profit and margin
   // useEffect(() => {
@@ -174,9 +176,9 @@ const EditProduct = ({ productData }) => {
   };
 
   const [selectedValue, setSelectedValue] = useState({
-    stockValue: getStockStatus(getProduct),
-    statusValue: getProduct?.status || 'draft',
-    categoriesValue: getProduct?.category || '',
+    stockValue: getStockStatus(apiProduct),
+    statusValue: apiProduct?.status || 'draft',
+    categoriesValue: apiProduct?.category || '',
   });
 
   const handleInputChange = (key, value) => {
@@ -317,8 +319,8 @@ const EditProduct = ({ productData }) => {
 
   // Map API variants to table format
   const getVariantsForTable = () => {
-    if (getProduct?.variants) {
-      return getProduct?.variants?.map(variant => ({
+    if (apiProduct?.variants) {
+      return apiProduct?.variants?.map(variant => ({
         attributes: variant.options || {},
         price: variant.price_cents ? variant.price_cents / 100 : 0,
         inventory: variant?.inventory || 0,
@@ -358,7 +360,7 @@ const EditProduct = ({ productData }) => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading product...</div>;
+    return <Loader />;
   }
 
   return (
@@ -404,11 +406,11 @@ const EditProduct = ({ productData }) => {
               <h2 className="sub_heading">Product Images</h2>
               
               {/* Display existing images */}
-              {getProduct?.images?.length > 0 && (
+              {apiProduct?.images?.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-700 mb-4">Current Images</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {getProduct.images.map((image, index) => (
+                    {apiProduct.images.map((image, index) => (
                       <div key={index} className="relative group">
                         <img
                           src={getImageUrl(image)}
@@ -441,12 +443,12 @@ const EditProduct = ({ productData }) => {
 
               {/* File Upload Component */}
               <FileUpload 
-                preloadedImages={getProduct?.images || []}
+                preloadedImages={apiProduct?.images || []}
               />
 
               {/* Image Count Info */}
               <div className="mt-4 text-sm text-gray-600">
-                {getProduct?.images?.length || 0} image(s) uploaded
+                {apiProduct?.images?.length || 0} image(s) uploaded
               </div>
             </div>
 
@@ -781,6 +783,7 @@ const EditProduct = ({ productData }) => {
                 </div>
               </div>
             )}
+            {/* <div>{product.status}</div> */}
 
             <div className="sidebar_item">
               <h2 className="sub_heading">Publish</h2>
