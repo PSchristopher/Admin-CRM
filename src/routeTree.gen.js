@@ -14,8 +14,8 @@ import { Route as rootRoute } from './routes/__root.jsx'
 import { Route as IndexRoute } from './routes/index.jsx'
 import { Route as LoginRoute } from './routes/login.jsx'
 import { Route as DashboardRoute } from './routes/dashboard.jsx'
-import { Route as CatalogRoute } from './routes/catalog.jsx'
-import { Route as CatalogProductManageRoute } from './routes/catalog.product.manage.jsx'
+import { Route as CatalogRoute } from './routes/products.jsx'
+import { Route as CatalogProductManageRoute } from './routes/products.product.manage.jsx'
 
 // Create/Update Routes
 
@@ -35,12 +35,12 @@ const DashboardRouteUpdated = DashboardRoute.update({
 })
 
 const CatalogRouteUpdated = CatalogRoute.update({
-  path: '/catalog',
+  path: '/products',
   getParentRoute: () => rootRoute,
 })
 
 const CatalogProductManageRouteUpdated = CatalogProductManageRoute.update({
-  path: '/catalog/product/manage',
+  path: '/products/product/manage',
   getParentRoute: () => rootRoute,
 })
 
@@ -55,17 +55,17 @@ const CatalogProductManageRouteUpdated = CatalogProductManageRoute.update({
 //       preLoaderRoute: typeof IndexRoute
 //       parentRoute: typeof rootRoute
 //     }
-//     '/catalog': {
-//       id: '/catalog'
-//       path: '/catalog'
-//       fullPath: '/catalog'
+//     '/products': {
+//       id: '/products'
+//       path: '/products'
+//       fullPath: '/products'
 //       preLoaderRoute: typeof CatalogRoute
 //       parentRoute: typeof rootRoute
 //     }
-//     '/catalog/product/manage': {
-//       id: '/catalog/product/manage'
-//       path: '/catalog/product/manage'
-//       fullPath: '/catalog/product/manage'
+//     '/products/product/manage': {
+//       id: '/products/product/manage'
+//       path: '/products/product/manage'
+//       fullPath: '/products/product/manage'
 //       preLoaderRoute: typeof CatalogProductManageRoute
 //       parentRoute: typeof rootRoute
 //     }

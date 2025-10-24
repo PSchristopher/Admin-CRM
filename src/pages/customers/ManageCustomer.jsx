@@ -26,7 +26,7 @@ const ManageCustomer = () => {
   ]);
 
   // Fetch customers from backend
-  const { data: customersData, isLoading, error, refetch } = useQuery({
+  const { data: response, isLoading, error, refetch } = useQuery({
     queryKey: ['customers', currentPage, selectedValue, searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -35,14 +35,25 @@ const ManageCustomer = () => {
         ...(searchTerm && { search: searchTerm })
       });
       
-      const { data } = await api.get(`/user`);
+      const { data } = await api.get(`/user?${params.toString()}`);
       return data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const customers = customersData?.data || [];
-  const totalPages = customersData?.totalPages || 1;
+  // Map the data according to your specified structure
+  const customers = (response?.data || []).map((c) => ({
+    id: c.id,
+    name: [c.first_name, c.last_name].filter(Boolean).join(' ') || c.email,
+    email: c.email,
+    image: c.avatar || c.image ,
+    createdAt: c.created_at || c.createdAt || new Date().toISOString(),
+    status: (c.is_active === undefined) ? (c.status || '') : (c.is_active ? 'Active' : 'Inactive'),
+    ordersCount: c.ordersCount || 0,
+    _raw: c,
+  }));
+
+  const totalPages = response?.pagination?.pages || response?.pagination?.pages === 0 ? response?.pagination?.pages : 1;
 
   const bulkAction = [
     { value: "delete", label: "Delete" },
@@ -88,7 +99,6 @@ const ManageCustomer = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
 
-
   const actionItems = ["Delete", "edit"];
 
   const handleActionItemClick = async (item, itemID) => {
@@ -108,7 +118,6 @@ const ManageCustomer = () => {
       navigate(`/customers/manage/${itemID}`);
     }
   };
-
 
   return (
     <section className="customer">
@@ -165,74 +174,66 @@ const ManageCustomer = () => {
                     </thead>
                     <tbody>
                       {customers.map((customer, key) => {
-                      return (
-                        <tr key={key}>
-                          <td className="td_checkbox">
-                            <CheckBox
-                              onChange={(isCheck) =>
-                                handleCheckCustomer(isCheck, customer.id)
-                              }
-                              isChecked={specificChecks[customer.id] || false}
-                            />
-                          </td>
-                          <td className="td_id">{customer.id}</td>
-                          <td className="td_image">
-                            <img
-                              src={customer.image || customer.avatar || '/default-avatar.png'}
-                              alt={customer.name}
-                            />
-                          </td>
-                          <td colSpan="4">
-                            <Link to={customer.id.toString()}>{customer.name}</Link>
-                          </td>
-                          <td>{customer.email}</td>
-                          <td>{customer.ordersCount || 0}</td>
-                          <td className="td_status">
-                            {customer.status.toLowerCase() === "active" ||
-                             customer.status.toLowerCase() === "completed" ||
-                             customer.status.toLowerCase() === "new" ||
-                             customer.status.toLowerCase() === "coming soon" ? (
-                               <Badge
-                                 label={customer.status}
-                                 className="light-success"
-                               />
-                             ) : customer.status.toLowerCase() === "inactive" ||
-                               customer.status.toLowerCase() === "out of stock" ||
-                               customer.status.toLowerCase() === "locked" ||
-                               customer.status.toLowerCase() === "discontinued" ? (
-                               <Badge
-                                 label={customer.status}
-                                 className="light-danger"
-                               />
-                             ) : customer.status.toLowerCase() === "on sale" ||
-                                 customer.status.toLowerCase() === "featured" ||
-                                 customer.status.toLowerCase() === "pending" ? (
-                               <Badge
-                                 label={customer.status}
-                                 className="light-warning"
-                               />
-                             ) : customer.status.toLowerCase() === "archive" ||
-                                 customer.status.toLowerCase() === "pause" ? (
-                               <Badge
-                                 label={customer.status}
-                                 className="light-secondary"
-                               />
-                             ) : (
-                               ""
-                             )}
-                          </td>
-                          <td className="td_date">{new Date(customer.createdAt).toLocaleDateString()}</td>
-                          
-                          <td className="td_action">
-                            <TableAction
-                              actionItems={actionItems}
-                              onActionItemClick={(item) =>
-                                handleActionItemClick(item, customer.id)
-                              }
-                            />
-                          </td>
-                        </tr>
-                      );
+                        return (
+                          <tr key={key}>
+                            <td className="td_checkbox">
+                              <CheckBox
+                                onChange={(isCheck) =>
+                                  handleCheckCustomer(isCheck, customer.id)
+                                }
+                                isChecked={specificChecks[customer.id] || false}
+                              />
+                            </td>
+                            <td className="td_id">{customer.id}</td>
+                            <td className="td_image">
+                              <img
+                                src={customer.image}
+                                alt={customer.name}
+                                // onError={(e) => {
+                                //   e.target.src = '/default-avatar.png';
+                                // }}
+                              />
+                            </td>
+                            <td colSpan="4">
+                              <Link to={customer.id.toString()}>{customer.name}</Link>
+                            </td>
+                            <td>{customer.email}</td>
+                            <td>{customer.ordersCount}</td>
+                            <td className="td_status">
+                              {customer.status.toLowerCase() === "active" ? (
+                                <Badge
+                                  label={customer.status}
+                                  className="light-success"
+                                />
+                              ) : customer.status.toLowerCase() === "inactive" ? (
+                                <Badge
+                                  label={customer.status}
+                                  className="light-danger"
+                                />
+                              ) : customer.status.toLowerCase() === "pending" ? (
+                                <Badge
+                                  label={customer.status}
+                                  className="light-warning"
+                                />
+                              ) : (
+                                <Badge
+                                  label={customer.status}
+                                  className="light-secondary"
+                                />
+                              )}
+                            </td>
+                            <td className="td_date">{new Date(customer.createdAt).toLocaleDateString()}</td>
+                            
+                            <td className="td_action">
+                              <TableAction
+                                actionItems={actionItems}
+                                onActionItemClick={(item) =>
+                                  handleActionItemClick(item, customer.id)
+                                }
+                              />
+                            </td>
+                          </tr>
+                        );
                       })}
                     </tbody>
                   </table>

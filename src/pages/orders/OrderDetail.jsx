@@ -70,7 +70,7 @@ const OrderDetail = () => {
                       </td>
                       <td>
                         <Link
-                          to={`/catalog/product/manage/${product.id.toString()}`}
+                          to={`/products/product/manage/${product.id.toString()}`}
                         >
                           {product.name}
                         </Link>

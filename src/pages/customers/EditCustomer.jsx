@@ -3,7 +3,6 @@ import Orders from '../../api/Orders.json';
 import Reviews from '../../api/Reviews.json';
 import country from '../../api/country.json';
 import {useParams, Link} from 'react-router-dom'
-import Customers from '../../api/Customers.json';
 import React, { useState, useEffect } from "react";
 import Modal from "../../components/common/Modal.jsx";
 import Badge from "../../components/common/Badge.jsx";
@@ -19,31 +18,86 @@ import Thumbnail from "../../components/common/Thumbnail.jsx";
 import Accordion from "../../components/common/Accordion.jsx";
 import TableAction from "../../components/common/TableAction.jsx";
 import MultiSelect from "../../components/common/MultiSelect.jsx";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../lib/apiClient.js";
 
 const EditCustomer = () => {
   const { customerId } = useParams();
 
-  const customer = Customers.find(customer => customer.id.toString() === customerId.toString());
-
-  const [fields, setFields] = useState({
-    name: customer.name,
-    email: customer.contact.email,
-    phone: customer.contact.phone,
-    date: customer.dob,
-    password: "",
-    passwordConfirm: "",
-    isVendor: customer.isVendor,
-    status: customer.status,
-    image: customer.image,
-    addressName:"",
-    addressPhone:"",
-    addressZip:"",
-    addressEmail:"",
-    addressStreet:"",
-    addressCountry:"",
-    addressState:"",
-    addressCity:"",
+ const { data: resp, isLoading, isError } = useQuery({
+  queryKey: ['customer', customerId],
+  queryFn: async () => {
+    console.log('useQuery: fetching customerId=', customerId);
+    try {
+      const res = await api.get(`/user/${customerId}`);
+      console.log('useQuery: api.get response=', res);
+      // normalize backend: return res.data if wrapped, else entire res
+      return res?.data ?? res;
+    } catch (err) {
+      console.error('useQuery: fetch error', err);
+      throw err;
+    }
+  },
+  enabled: Boolean(customerId),
+  staleTime: 5 * 60 * 1000,
+  retry: 1,
+  onSuccess: (d) => console.log('useQuery onSuccess', d),
+  onError: (e) => console.log('useQuery onError', e),
+});
+  const backendCustomer = resp?.data ?? resp ?? null;
+console.log(backendCustomer, 'backendCustomerbackendCustomer')
+  const defaultFields = {
+    name: '',
+    email: '',
+    phone: '',
+    date: '',
+    isVendor: false,
+    status: 'active',
+    image: '',
+    addressName: "",
+    addressPhone: "",
+    addressZip: "",
+    addressEmail: "",
+    addressStreet: "",
+    addressCountry: "",
+    addressState: "",
+    addressCity: "",
+  };
+const [fields, setFields] = useState(() => {
+    const source = backendCustomer || {};
+    return {
+      ...defaultFields,
+      name: source.first_name ? [source.first_name, source.last_name].filter(Boolean).join(' ') : (source.name || ''),
+      email: source.email || '',
+      phone: source.phone || '',
+      date: source.created_at || source.dob || '',
+      isVendor: source.isVendor || false,
+      status: (source.is_active !== undefined) ? (source.is_active ? 'Active' : 'Inactive') : (source.status || 'active'),
+      image: source.avatar || source.image || '',
+    };
   });
+   useEffect(() => {
+    const source = backendCustomer || {};
+    setFields(prev => ({
+      ...defaultFields,
+      name: source.first_name ? [source.first_name, source.last_name].filter(Boolean).join(' ') : (source.name || prev.name || ''),
+      email: source.email || prev.email || '',
+      phone: source.phone || prev.phone || '',
+      date: source.created_at || source.dob || prev.date || '',
+      isVendor: source.isVendor || prev.isVendor || false,
+      status: (source.is_active !== undefined) ? (source.is_active ? 'Active' : 'Inactive') : (source.status || prev.status || 'active'),
+      image: source.avatar || source.image || prev.image || '',
+      // preserve address fields from prev (they can be edited)
+      addressName: prev.addressName || '',
+      addressPhone: prev.addressPhone || '',
+      addressZip: prev.addressZip || '',
+      addressEmail: prev.addressEmail || '',
+      addressStreet: prev.addressStreet || '',
+      addressCountry: prev.addressCountry || '',
+      addressState: prev.addressState || '',
+      addressCity: prev.addressCity || '',
+    }));
+  }, [backendCustomer]);
 
   const handleInputChange = (key, value) => {
     setFields({
@@ -101,7 +155,7 @@ const EditCustomer = () => {
     if (updateItem === "delete") {
       alert(`#${itemID} item delete`);
     } else if (updateItem === "view") {
-      navigate(`/catalog/product/manage/${itemID}`);
+      navigate(`/products/product/manage/${itemID}`);
     }
   };
   return (
@@ -132,11 +186,11 @@ const EditCustomer = () => {
                 />
               </div>
               <div className="column">
-                <Toggler
+                {/* <Toggler
                   label="Is Vendor"
                   checked={fields.isVendor}
                   onChange={isVendorCheck}
-                />
+                /> */}
               </div>
               <div className="column">
                 <Input
@@ -158,7 +212,7 @@ const EditCustomer = () => {
                   onChange={(value) => handleInputChange("date", value)}
                 />
               </div>
-              <div className="column">
+              {/* <div className="column">
                 <Input
                   type="password"
                   placeholder="Enter the customer password"
@@ -177,7 +231,7 @@ const EditCustomer = () => {
                   value={fields.passwordConfirm}
                   onChange={(value) => handleInputChange("passwordConfirm", value)}
                 />
-              </div>
+              </div> */}
             </div>
             <div className="content_item">
               <h2 className="sub_heading">
@@ -290,8 +344,8 @@ const EditCustomer = () => {
                   />
                 </div>
               </Offcanvas>
-              {
-                customer.addresses.map((address, key)=>(
+              {/* {
+                backendCustomer.addresses.map((address, key)=>(
                   <div className="column" key={key}>
                     <Accordion title={`#${key < 9 ? `0${key+1}` : key+1} Address`}>
                       <table className="bordered">
@@ -315,10 +369,10 @@ const EditCustomer = () => {
                     </Accordion>
                   </div>
                 ))
-              }
+              } */}
             </div>
             <div className="content_item">
-              <h2 className="sub_heading">Payments</h2>
+              <h2 className="sub_heading">Orders</h2>
               <div className="column">
                 <div className="table_responsive">
                   <table className="bordered">
@@ -396,7 +450,7 @@ const EditCustomer = () => {
                 </div>
               </div>
             </div>
-            <div className="content_item">
+            {/* <div className="content_item">
               <h2 className="sub_heading">reviews</h2>
               <div className="column">
                 <table className="bordered">
@@ -464,7 +518,7 @@ const EditCustomer = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="sidebar">
             <div className="sidebar_item">

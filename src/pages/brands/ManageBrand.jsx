@@ -230,7 +230,7 @@ const status = [
                 </div>
               </Offcanvas>
               <div className="btn_parent">
-                <Link to="/catalog/brand/add" className="sm button">
+                <Link to="/products/brand/add" className="sm button">
                   <Icons.TbPlus />
                   <span>Create Brand</span>
                 </Link>

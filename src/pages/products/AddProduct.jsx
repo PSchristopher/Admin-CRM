@@ -36,7 +36,7 @@ const AddProduct = ({ productData }) => {
     quantity: "",
     question: "",
     answer: "",
-    metaLink: "http://localhost:5173/catalog/product",
+    metaLink: "http://localhost:5173/products/product",
     metaTitle: "",
     metaDescription: "",
   });

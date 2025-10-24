@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import Layout from '../components/layout/Layout.jsx'
 
-export const Route = createFileRoute('/catalog/product/manage')({
+export const Route = createFileRoute('/products/product/manage')({
   beforeLoad: () => {
     // Check authentication
     const accessToken = localStorage.getItem('accessToken')

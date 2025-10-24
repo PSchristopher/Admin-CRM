@@ -72,19 +72,19 @@ const routes = [
   },
   // Catalog
   {
-    path: "/catalog/product/add",
+    path: "/products/product/add",
     element: <AddProduct />,
   },
   {
-    path: "/catalog/product/manage",
+    path: "/products/product/manage",
     element: <ManageProduct />,
   },
   {
-    path: "/catalog/product/manage/:productId",
+    path: "/products/product/manage/:productId",
     element: <EditProduct />,
   },
   {
-    path: "/catalog/product/attribute",
+    path: "/products/product/attribute",
     element: <Attribute />,
   },
   // orders
@@ -102,11 +102,11 @@ const routes = [
   },
   // Catalog Categories
   {
-    path: "/catalog/categories/manage",
+    path: "/products/categories/manage",
     element: <ManageCategories />,
   },
   {
-    path: "/catalog/categories/:categoryid",
+    path: "/products/categories/:categoryid",
     element: <EditCategories />,
   },
   // customers

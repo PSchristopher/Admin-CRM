@@ -20,7 +20,7 @@ const ManageProduct = () => {
     sku: "",
     store: "",
     status: "",
-    priceRange: [0,100],
+    priceRange: [0, 100],
   });
   const [bulkCheck, setBulkCheck] = useState(false);
   const [specificChecks, setSpecificChecks] = useState({});
@@ -32,20 +32,46 @@ const ManageProduct = () => {
     { value: 5, label: "5" },
     { value: 10, label: "10" },
   ]);
+
   const handleInputChange = (key, value) => {
     setFields({
-      ...product,
+      ...fields,
       [key]: value,
     });
   };
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products"],
+  const { data: rawProducts = { data: [], pagination: {} }, isLoading , refetch} = useQuery({
+    queryKey: ["products", currentPage, selectedValue],
     queryFn: async () => {
-      const res = await api.get("/admin/products");
-      return res.data;
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: selectedValue.toString(),
+      });
+      const res = await api.get(`/admin/products?${params.toString()}`);
+      return res.data ?? res;
     },
   });
+
+  // Map the data according to the incoming API structure
+  const products = (rawProducts.data || []).map((p) => ({
+    id: p.id,
+    name: p.title || '',
+    image: p.images && p?.images[0] ? (p?.images[0].url ) : '',
+    price: p.price_cents != null ? `$${(p.price_cents / 100).toFixed(2)}` : '$0.00',
+    price_cents: p.price_cents || 0,
+    brand: p.brand || '',
+    sku: p.local_sku || '',
+    created_at: p.created_at ? new Date(p.created_at).toLocaleDateString() : '',
+    status: p.status || 'draft',
+    inventory: p.variants?.[0]?.inventory || 0,
+    variants: p.variants || [],
+    currency: p.currency || 'USD',
+    description: p.description || '',
+    tags: p.tags || [],
+    meta: p.meta || {},
+  }));
+
+  const totalPages = rawProducts.pagination?.pages || 1;
 
   const bulkAction = [
     { value: "delete", label: "Delete" },
@@ -82,17 +108,21 @@ const ManageProduct = () => {
   };
 
   const showTableRow = (selectedOption) => {
-    setSelectedValue(selectedOption.label);
+    setSelectedValue(selectedOption.value);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   const actionItems = ["Delete", "edit"];
 
   const handleActionItemClick = (item, itemID) => {
-    var updateItem = item.toLowerCase();
+    const updateItem = item.toLowerCase();
     if (updateItem === "delete") {
-      alert(`#${itemID} item delete`);
+      if (window.confirm(`Are you sure you want to delete product #${itemID}?`)) {
+        // Add delete API call here
+        console.log(`Delete product ${itemID}`);
+      }
     } else if (updateItem === "edit") {
-      navigate(`/catalog/product/manage/${itemID}`);
+      navigate(`/products/product/manage/${itemID}`);
     }
   };
 
@@ -110,47 +140,70 @@ const ManageProduct = () => {
     setFields({
       ...fields,
       priceRange: newValues,
-    })
+    });
   };
 
   const stores = [
-      { label: 'FashionFiesta' },
-      { label: 'TechTreasures' },
-      { label: 'GadgetGrove' },
-      { label: 'HomeHarbor' },
-      { label: 'HealthHaven' },
-      { label: 'BeautyBoutique' },
-      { label: "Bookworm's Haven" },
-      { label: 'PetParadise' },
-      { label: 'FoodieFinds' }
+    { label: 'FashionFiesta' },
+    { label: 'TechTreasures' },
+    { label: 'GadgetGrove' },
+    { label: 'HomeHarbor' },
+    { label: 'HealthHaven' },
+    { label: 'BeautyBoutique' },
+    { label: "Bookworm's Haven" },
+    { label: 'PetParadise' },
+    { label: 'FoodieFinds' }
   ];
-const status = [
-    { label: 'In Stock' },
-    { label: 'Out of Stock' },
-    { label: 'Available Soon' },
-    { label: 'Backorder' },
-    { label: 'Refurbished' },
-    { label: 'On Sale' },
-    { label: 'Limited Stock' },
-    { label: 'Discontinued' },
-    { label: 'Coming Soon' },
-    { label: 'New Arrival' },
-    { label: 'Preorder' },
-];
+
+  const statusOptions = [
+    { label: 'draft', value: 'draft' },
+    { label: 'published', value: 'published' },
+    { label: 'archived', value: 'archived' },
+    { label: 'pending', value: 'pending' },
+  ];
+
   const handleSelectStore = (selectedValues) => {
     setFields({
       ...fields,
       store: selectedValues,
-    })
+    });
   };
 
   const handleSelectStatus = (selectedValues) => {
     setFields({
       ...fields,
       status: selectedValues.label,
-    })
+    });
   };
 
+  // Get stock status based on inventory
+  const getStockStatus = (product) => {
+    const totalInventory = product.variants.reduce((sum, variant) => sum + (variant.inventory || 0), 0);
+    
+    if (totalInventory > 10) {
+      return { label: "In Stock", className: "light-success" };
+    } else if (totalInventory > 0) {
+      return { label: "Low Stock", className: "light-warning" };
+    } else {
+      return { label: "Out of Stock", className: "light-danger" };
+    }
+  };
+
+  // Get status badge
+  const getStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'published':
+        return { label: status, className: "light-success" };
+      case 'draft':
+        return { label: status, className: "light-warning" };
+      case 'archived':
+        return { label: status, className: "light-secondary" };
+      case 'pending':
+        return { label: status, className: "light-info" };
+      default:
+        return { label: status || 'Unknown', className: "light-secondary" };
+    }
+  };
 
   return (
     <section className="products">
@@ -173,6 +226,8 @@ const status = [
               <Input
                 placeholder="Search Product..."
                 className="sm table_search"
+                value={fields.name}
+                onChange={(value) => handleInputChange("name", value)}
               />
               <Offcanvas
                 isOpen={isOffcanvasOpen}
@@ -194,10 +249,10 @@ const status = [
                   <div className="column">
                     <Input
                       type="text"
-                      label="Price"
-                      value={fields.price}
-                      placeholder="Enter the product price"
-                      onChange={(value) => handleInputChange("price", value)}
+                      label="SKU"
+                      value={fields.sku}
+                      placeholder="Enter the product SKU"
+                      onChange={(value) => handleInputChange("sku", value)}
                     />
                   </div>
                   <div className="column">
@@ -211,15 +266,19 @@ const status = [
                   </div>
                   <div className="column">
                     <Dropdown
-                      options={status}
-                      placeholder="Select Store"
-                      label="Store"
+                      options={statusOptions}
+                      placeholder="Select Status"
+                      label="Status"
                       selectedValue={fields.status}
                       onClick={handleSelectStatus}
                     />
                   </div>
                   <div className="column">
-                    <RangeSlider label="Price range" values={fields.priceRange} onValuesChange={handleSliderChange} />
+                    <RangeSlider 
+                      label="Price range" 
+                      values={fields.priceRange} 
+                      onValuesChange={handleSliderChange} 
+                    />
                   </div>
                 </div>
                 <div className="offcanvas-footer">
@@ -238,107 +297,109 @@ const status = [
                 </div>
               </Offcanvas>
               <div className="btn_parent">
-                <Link to="/catalog/product/add" className="sm button">
+                {/* <Link to="/products/product/add" className="sm button">
                   <Icons.TbPlus />
                   <span>Create Product</span>
-                </Link>
+                </Link> */}
                 <Button
                   label="Reload"
                   icon={<Icons.TbRefresh />}
                   className="sm"
+onClick={()=>refetch()}
                 />
               </div>
             </div>
             <div className="content_body">
-              <div className="table_responsive">
-                <table className="separate">
-                  <thead>
-                    <tr>
-                      <th className="td_checkbox">
-                        <CheckBox
-                          onChange={handleBulkCheckbox}
-                          isChecked={bulkCheck}
-                        />
-                      </th>
-                      <th className="td_id">id</th>
-                      <th className="td_image">image</th>
-                      <th colSpan="4">name</th>
-                      <th>price</th>
-                      <th>store</th>
-                      <th>sku</th>
-                      <th>created at</th>
-                      <th className="td_status">status</th>
-                      <th className="td_status">stock status</th>
-                      <th className="td_action">#</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product, key) => {
-                      return (
-                        <tr key={key}>
-                          <td className="td_checkbox">
-                            <CheckBox
-                              onChange={(isCheck) =>
-                                handleCheckProduct(isCheck, product.id)
-                              }
-                              isChecked={specificChecks[product.id] || false}
-                            />
-                          </td>
-                          <td className="td_id">{product.id}</td>
-                          <td className="td_image">
-                            <img
-                              src={product.images.thumbnail}
-                              alt={product.name}
-                            />
-                          </td>
-                          <td colSpan="4">
-                            <Link to={product.id}>{product.name}</Link>
-                          </td>
-                          <td>
-                            {`${product.price} `}
-                            <b>{product.currency}</b>
-                          </td>
-                          <td>
-                            <Link>{product.brand}</Link>
-                          </td>
-                          <td>{product.sku}</td>
-                          <td>{product.availability_dates.start_date}</td>
-                          <td className="td_status">
-                            {product.ratings.average_rating}
-                          </td>
-                          <td className="td_status">
-                            {product.inventory.in_stock ? (
-                              <Badge
-                                label="In Stock"
-                                className="light-success"
+              {isLoading ? (
+                <div className="loading">Loading products...</div>
+              ) : (
+                <div className="table_responsive">
+                  <table className="separate">
+                    <thead>
+                      <tr>
+                        <th className="td_checkbox">
+                          <CheckBox
+                            onChange={handleBulkCheckbox}
+                            isChecked={bulkCheck}
+                          />
+                        </th>
+                        <th className="td_id">ID</th>
+                        <th className="td_image">Image</th>
+                        <th colSpan="4">Name</th>
+                        <th>Price</th>
+                        <th>Brand</th>
+                        <th>SKU</th>
+                        <th>Created At</th>
+                        <th className="td_status">Status</th>
+                        <th className="td_status">Stock Status</th>
+                        <th className="td_action">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((product, key) => {
+                        const stockStatus = getStockStatus(product);
+                        const statusBadge = getStatusBadge(product.status);
+                        
+                        return (
+                          <tr key={key}>
+                            <td className="td_checkbox">
+                              <CheckBox
+                                onChange={(isCheck) =>
+                                  handleCheckProduct(isCheck, product.id)
+                                }
+                                isChecked={specificChecks[product.id] || false}
                               />
-                            ) : product.inventory.quantity < 10 &&
-                              product.inventory.quantity > 0 ? (
-                              <Badge
-                                label="Low Stock"
-                                className="light-warning"
+                            </td>
+                            <td className="td_id">#{product.id.slice(0, 8)}...</td>
+                            <td className="td_image">
+                              <img
+                                src={product?.image}
+                                alt={product.name}
+                                // onError={(e) => {
+                                //   e.target.src = '/default-product.png';
+                                // }}
                               />
-                            ) : (
+                            </td>
+                            <td colSpan="4">
+                              <Link to={`/products/product/manage/${product.id}`}>
+                                {product.name}
+                              </Link>
+                            </td>
+                            <td>
+                              {product.price}
+                            </td>
+                            <td>
+                              <Link>{product.brand}</Link>
+                            </td>
+                            <td>{product.sku}</td>
+                            <td>{product.created_at}</td>
+                            <td className="td_status">
                               <Badge
-                                label="Out of Stock"
-                                className="light-danger"
+                                label={statusBadge.label}
+                                className={statusBadge.className}
                               />
-                            )}
-                          </td>
-                          <td className="td_action">
-                            <TableAction
-                              actionItems={actionItems}
-                              onActionItemClick={(item) =>
-                                handleActionItemClick(item, product.id)
-                              }
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="td_status">
+                              <Badge
+                                label={stockStatus.label}
+                                className={stockStatus.className}
+                              />
+                            </td>
+                            <td className="td_action">
+                              <TableAction
+                                actionItems={actionItems}
+                                onActionItemClick={(item) =>
+                                  handleActionItemClick(item, product.id)
+                                }
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             <div className="content_footer">
               <Dropdown
@@ -350,7 +411,7 @@ const status = [
               />
               <Pagination
                 currentPage={currentPage}
-                totalPages={5}
+                totalPages={totalPages}
                 onPageChange={onPageChange}
               />
             </div>

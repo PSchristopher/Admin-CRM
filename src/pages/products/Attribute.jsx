@@ -281,7 +281,7 @@ const Attribute = () => {
                 className="sm table_search"
               />
               <div className="btn_parent">
-                <Link to="/catalog/attribute/add" className="sm button">
+                <Link to="/products/attribute/add" className="sm button">
                   <Icons.TbPlus />
                   <span>Create Attribute</span>
                 </Link>

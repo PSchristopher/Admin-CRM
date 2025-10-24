@@ -130,7 +130,7 @@ const ManageCategories = () => {
       alert(`#${itemID} item delete`)
     }
     else if(updateItem === "edit"){
-      navigate(`/catalog/categories/manage/${itemID}`)
+      navigate(`/products/categories/manage/${itemID}`)
     }
   };
 
@@ -212,7 +212,7 @@ const ManageCategories = () => {
                 className="sm table_search"
               />
               <div className="btn_parent">
-                <Link to="/catalog/category/add" className="sm button">
+                <Link to="/products/category/add" className="sm button">
                   <Icons.TbPlus />
                   <span>Create Categories</span>
                 </Link>

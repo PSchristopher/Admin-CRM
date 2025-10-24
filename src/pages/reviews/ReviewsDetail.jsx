@@ -117,7 +117,7 @@ const ReviewsDetail = () => {
                   <img src={product.images.thumbnail} alt=""/>
                 </figure>
                 <div className="sidebar_product_content">
-                  <Link to={`/catalog/product/manage/${product.id}`} className="sidebar_product_title">{product.name}</Link>
+                  <Link to={`/products/product/manage/${product.id}`} className="sidebar_product_title">{product.name}</Link>
                   <p className="sidebar_product_brand">{product.brand}</p>
                 </div>
               </div>

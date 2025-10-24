@@ -99,7 +99,7 @@ const ManageReviews = () => {
                 className="sm table_search"
               />
               <div className="btn_parent">
-                <Link to="/catalog/review/add" className="sm button">
+                <Link to="/products/review/add" className="sm button">
                   <Icons.TbPlus />
                   <span>Create Review</span>
                 </Link>

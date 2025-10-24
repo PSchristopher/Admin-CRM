@@ -4,11 +4,13 @@ import * as Icons from "react-icons/tb";
 import Input from '../common/Input.jsx';
 import Profile from '../common/Profile.jsx';
 import ProfileImg from '../../images/users/user_3.webp';
+import { useAuth } from "../../providers/AuthProvider.jsx";
 
 const Navbar = () => {
-  const [user] = useState({
-    username: "Your Username",
-    email: "your@email.com", // Replace with your user data
+  const {user}=useAuth();
+  const [s] = useState({
+    username: user.username,
+    email: user.email, 
   });
 
   return (
